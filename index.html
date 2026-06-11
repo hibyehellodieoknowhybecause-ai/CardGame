@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Creature Card Backbone</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="top-bar">
+        <div>
+          <p class="eyebrow">Creature Card System</p>
+          <h1>Card Forge</h1>
+        </div>
+        <div class="resource-strip" aria-label="Summoning resources">
+          <span id="basicTickets">Basic Tickets: 20</span>
+          <span id="mysticTickets">Mystic Tickets: 8</span>
+        </div>
+      </header>
+
+      <main class="main-menu" aria-label="Main menu">
+        <button class="summon-entry" id="openSummon" type="button">
+          <span class="summon-icon" aria-hidden="true">+</span>
+          <span>
+            <strong>Summoning</strong>
+            <small>Open creature packs</small>
+          </span>
+        </button>
+        <button class="summon-entry collection-entry" id="openCollection" type="button">
+          <span class="summon-icon" aria-hidden="true">≡</span>
+          <span>
+            <strong>Monsters</strong>
+            <small>View and sort collection</small>
+          </span>
+        </button>
+      </main>
+    </div>
+
+    <section class="summon-menu" id="summonMenu" aria-hidden="true" aria-label="Summoning menu">
+      <div class="summon-panel">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Summoning Gate</p>
+            <h2>Choose a Pack</h2>
+          </div>
+          <button class="icon-button" id="closeSummon" type="button" aria-label="Close summoning menu">x</button>
+        </div>
+
+        <div class="pack-grid" id="packGrid"></div>
+
+        <div class="result-area">
+          <div class="result-header">
+            <h3>Latest Summons</h3>
+            <span id="collectionCount">Collection: 0</span>
+          </div>
+          <div class="card-row" id="summonResults">
+            <p class="empty-state">Open a pack to reveal placeholder creature cards.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="summon-menu" id="collectionMenu" aria-hidden="true" aria-label="Monster collection">
+      <div class="summon-panel collection-panel">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Monster Box</p>
+            <h2>Your Monsters</h2>
+          </div>
+          <button class="icon-button" id="closeCollection" type="button" aria-label="Close monster collection">x</button>
+        </div>
+
+        <div class="collection-tools" aria-label="Collection sorting controls">
+          <label>
+            <span>Sort by</span>
+            <select id="collectionSortField">
+              <option value="element">Attribute</option>
+              <option value="naturalStars">Stars</option>
+              <option value="level">Level</option>
+              <option value="atk">ATK</option>
+              <option value="spd">SPD</option>
+              <option value="def">DEF</option>
+              <option value="hp">HP</option>
+            </select>
+          </label>
+
+          <div class="direction-toggle" role="group" aria-label="Sort direction">
+            <button type="button" class="active" data-sort-direction="desc">Descending</button>
+            <button type="button" data-sort-direction="asc">Ascending</button>
+          </div>
+        </div>
+
+        <div class="result-area">
+          <div class="result-header">
+            <h3>Collection</h3>
+            <span id="monsterCount">Monsters: 0</span>
+          </div>
+          <div class="card-row collection-grid" id="collectionList">
+            <p class="empty-state">Summoned monsters will appear here.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <script src="game.js"></script>
+  </body>
+</html>
