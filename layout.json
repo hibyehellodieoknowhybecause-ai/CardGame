@@ -31,6 +31,30 @@
   },
   "textBoxes": [
     {
+      "id": "label-forge",
+      "text": "Forge",
+      "x": 75.36,
+      "y": 39.3,
+      "w": 4,
+      "h": 4,
+      "color": "#ffe7b3",
+      "fontSize": 13,
+      "fontWeight": "900",
+      "align": "center"
+    },
+    {
+      "id": "label-trials",
+      "text": "Trials",
+      "x": 74.78,
+      "y": 56.31,
+      "w": 6,
+      "h": 1.5,
+      "color": "#ffffff",
+      "fontSize": 13,
+      "fontWeight": "900",
+      "align": "center"
+    },
+    {
       "id": "label-summoning",
       "text": "Summoning",
       "x": 50.35,
