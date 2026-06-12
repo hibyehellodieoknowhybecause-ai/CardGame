@@ -150,9 +150,60 @@ const defaultButtonLayout = {
   trials: { x: 72, y: 61, w: 8, h: 8, labelY: 2.25 },
 };
 
+const defaultTextBoxes = [
+  {
+    id: "label-summoning",
+    text: "Summoning",
+    x: 50.73,
+    y: 87.75,
+    w: 8,
+    h: 1.5,
+    color: "#fff3c6",
+    fontSize: 13,
+    fontWeight: "900",
+    align: "center",
+  },
+  {
+    id: "label-monsters",
+    text: "Monsters",
+    x: 15.52,
+    y: 51.8,
+    w: 8,
+    h: 1.5,
+    color: "#fff3c6",
+    fontSize: 13,
+    fontWeight: "900",
+    align: "center",
+  },
+  {
+    id: "label-forge",
+    text: "Forge",
+    x: 89.27,
+    y: 31.8,
+    w: 6,
+    h: 1.5,
+    color: "#ffe7b3",
+    fontSize: 13,
+    fontWeight: "900",
+    align: "center",
+  },
+  {
+    id: "label-trials",
+    text: "Trials",
+    x: 88.85,
+    y: 55.5,
+    w: 6,
+    h: 1.5,
+    color: "#ffe7b3",
+    fontSize: 13,
+    fontWeight: "900",
+    align: "center",
+  },
+];
+
 let layoutState = {
   buttons: structuredClone(defaultButtonLayout),
-  textBoxes: [],
+  textBoxes: structuredClone(defaultTextBoxes),
 };
 let buttonLayout = layoutState.buttons;
 let isLayoutEditing = false;
@@ -320,13 +371,17 @@ function normalizeTextBox(item, index = 0) {
 function normalizeLayout(rawLayout) {
   const usesStructuredLayout = isObject(rawLayout?.buttons) || Array.isArray(rawLayout?.textBoxes);
   const rawButtons = usesStructuredLayout ? rawLayout.buttons : rawLayout;
-  const textBoxes = Array.isArray(rawLayout?.textBoxes)
+  const savedTextBoxes = Array.isArray(rawLayout?.textBoxes)
     ? rawLayout.textBoxes.map(normalizeTextBox).filter(Boolean)
     : [];
+  const savedTextBoxIds = new Set(savedTextBoxes.map((textBox) => textBox.id));
+  const defaultMissingTextBoxes = defaultTextBoxes
+    .filter((textBox) => !savedTextBoxIds.has(textBox.id))
+    .map(normalizeTextBox);
 
   return {
     buttons: normalizeButtonLayout(rawButtons),
-    textBoxes,
+    textBoxes: [...defaultMissingTextBoxes, ...savedTextBoxes],
   };
 }
 
@@ -967,7 +1022,6 @@ if (isLocalLayoutEditor) {
   mainMenu.addEventListener("pointercancel", stopLayoutDrag);
 
   layoutEntries.forEach((entry) => {
-    entry.addEventListener("pointerdown", startLayoutDrag);
     entry.addEventListener("click", (event) => {
       if (!isLayoutEditing) return;
 

@@ -29,5 +29,54 @@
       "labelY": 2.25
     }
   },
-  "textBoxes": []
+  "textBoxes": [
+    {
+      "id": "label-summoning",
+      "text": "Summoning",
+      "x": 50.73,
+      "y": 87.75,
+      "w": 8,
+      "h": 1.5,
+      "color": "#fff3c6",
+      "fontSize": 13,
+      "fontWeight": "900",
+      "align": "center"
+    },
+    {
+      "id": "label-monsters",
+      "text": "Monsters",
+      "x": 15.52,
+      "y": 51.8,
+      "w": 8,
+      "h": 1.5,
+      "color": "#fff3c6",
+      "fontSize": 13,
+      "fontWeight": "900",
+      "align": "center"
+    },
+    {
+      "id": "label-forge",
+      "text": "Forge",
+      "x": 89.27,
+      "y": 31.8,
+      "w": 6,
+      "h": 1.5,
+      "color": "#ffe7b3",
+      "fontSize": 13,
+      "fontWeight": "900",
+      "align": "center"
+    },
+    {
+      "id": "label-trials",
+      "text": "Trials",
+      "x": 88.85,
+      "y": 55.5,
+      "w": 6,
+      "h": 1.5,
+      "color": "#ffe7b3",
+      "fontSize": 13,
+      "fontWeight": "900",
+      "align": "center"
+    }
+  ]
 }
