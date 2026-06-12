@@ -157,6 +157,9 @@ const monsterCount = document.querySelector("#monsterCount");
 const collectionSortField = document.querySelector("#collectionSortField");
 const basicTickets = document.querySelector("#basicTickets");
 const mysticTickets = document.querySelector("#mysticTickets");
+const homeScene = document.querySelector("#homeScene");
+const navSummonButton = document.querySelector("#navSummon");
+const navCollectionButton = document.querySelector("#navCollection");
 
 function getRarity(stars) {
   return rarities.find((rarity) => rarity.stars === stars);
@@ -444,6 +447,15 @@ openCollectionButton.addEventListener("click", () => {
   collectionMenu.setAttribute("aria-hidden", "false");
 });
 
+navSummonButton.addEventListener("click", () => {
+  summonMenu.setAttribute("aria-hidden", "false");
+});
+
+navCollectionButton.addEventListener("click", () => {
+  renderCollection();
+  collectionMenu.setAttribute("aria-hidden", "false");
+});
+
 closeSummonButton.addEventListener("click", () => {
   summonMenu.setAttribute("aria-hidden", "true");
 });
@@ -477,6 +489,24 @@ document.querySelectorAll("[data-sort-direction]").forEach((button) => {
     });
     renderCollection();
   });
+});
+
+function updateSceneMotion(clientX, clientY) {
+  const rect = homeScene.getBoundingClientRect();
+  const x = (clientX - rect.left) / rect.width - 0.5;
+  const y = (clientY - rect.top) / rect.height - 0.5;
+
+  homeScene.style.setProperty("--scene-x", `${clamp(x * 18, -9, 9)}px`);
+  homeScene.style.setProperty("--scene-y", `${clamp(y * 18, -9, 9)}px`);
+}
+
+homeScene.addEventListener("pointermove", (event) => {
+  updateSceneMotion(event.clientX, event.clientY);
+});
+
+homeScene.addEventListener("pointerleave", () => {
+  homeScene.style.setProperty("--scene-x", "0px");
+  homeScene.style.setProperty("--scene-y", "0px");
 });
 
 renderResources();

@@ -4,13 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Creature Card Backbone</title>
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=2" />
   </head>
   <body>
-    <div class="app-shell">
+    <div class="app-shell" id="homeScene">
+      <div class="home-art" aria-hidden="true">
+        <div class="home-art-image"></div>
+        <div class="cloud-layer cloud-layer-back"></div>
+        <div class="cloud-layer cloud-layer-front"></div>
+        <div class="magic-glow glow-oracle"></div>
+        <div class="magic-glow glow-gate"></div>
+        <div class="magic-glow glow-obelisk"></div>
+      </div>
+
       <header class="top-bar">
         <div>
-          <p class="eyebrow">Creature Card System</p>
+          <p class="eyebrow">Mythic Card Realm</p>
           <h1>Card Forge</h1>
         </div>
         <div class="resource-strip" aria-label="Summoning resources">
@@ -20,21 +29,41 @@
       </header>
 
       <main class="main-menu" aria-label="Main menu">
-        <button class="summon-entry" id="openSummon" type="button">
-          <span class="summon-icon" aria-hidden="true">+</span>
+        <button class="map-entry summon-entry" id="openSummon" type="button" style="--x: 52%; --y: 78%">
+          <span class="map-pin" aria-hidden="true">+</span>
           <span>
             <strong>Summoning</strong>
             <small>Open creature packs</small>
           </span>
         </button>
-        <button class="summon-entry collection-entry" id="openCollection" type="button">
-          <span class="summon-icon" aria-hidden="true">≡</span>
+        <button class="map-entry collection-entry" id="openCollection" type="button" style="--x: 23%; --y: 49%">
+          <span class="map-pin" aria-hidden="true">=</span>
           <span>
             <strong>Monsters</strong>
             <small>View and sort collection</small>
           </span>
         </button>
+        <button class="map-entry locked-entry" type="button" style="--x: 72%; --y: 34%" disabled>
+          <span class="map-pin" aria-hidden="true">!</span>
+          <span>
+            <strong>Forge</strong>
+            <small>Coming soon</small>
+          </span>
+        </button>
+        <button class="map-entry locked-entry" type="button" style="--x: 72%; --y: 61%" disabled>
+          <span class="map-pin" aria-hidden="true">i</span>
+          <span>
+            <strong>Trials</strong>
+            <small>Coming soon</small>
+          </span>
+        </button>
       </main>
+
+      <nav class="bottom-nav" aria-label="Primary navigation">
+        <button type="button" class="active">Home</button>
+        <button type="button" id="navSummon">Summon</button>
+        <button type="button" id="navCollection">Monsters</button>
+      </nav>
     </div>
 
     <section class="summon-menu" id="summonMenu" aria-hidden="true" aria-label="Summoning menu">
