@@ -14,6 +14,12 @@
   box-sizing: border-box;
 }
 
+html {
+  min-height: 100%;
+  min-height: 100dvh;
+  background: #111318;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -36,6 +42,8 @@ button {
 .app-shell {
   position: relative;
   isolation: isolate;
+  height: 100vh;
+  height: 100dvh;
   min-height: 100vh;
   min-height: 100dvh;
   width: min(100vw, 30rem);
@@ -353,8 +361,12 @@ h1 {
 .summon-panel {
   width: min(72rem, 100%);
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-y: auto;
-  padding: clamp(1rem, 3vw, 2rem);
+  padding:
+    max(clamp(1rem, 3vw, 2rem), env(safe-area-inset-top))
+    clamp(1rem, 3vw, 2rem)
+    max(clamp(1rem, 3vw, 2rem), env(safe-area-inset-bottom));
   background: #141820;
   border-left: 1px solid rgba(255, 255, 255, 0.1);
 }
