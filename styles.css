@@ -46,7 +46,7 @@ button {
   height: 100dvh;
   min-height: 100vh;
   min-height: 100dvh;
-  width: min(100vw, 30rem);
+  width: min(100vw, 47rem);
   display: grid;
   grid-template-rows: auto 1fr auto;
   overflow: hidden;
@@ -75,9 +75,10 @@ button {
 
 .home-art-image {
   position: absolute;
-  inset: -2.5%;
+  inset: 0;
   background-image: url("assets/home/mythic-academy-home.png");
-  background-size: cover;
+  background-repeat: no-repeat;
+  background-size: contain;
   background-position: center;
   transform: translate3d(calc(var(--scene-x) * -0.35), calc(var(--scene-y) * -0.35), 0) scale(1.035);
   transition: transform 180ms ease-out;
@@ -890,6 +891,11 @@ dd {
   .app-shell {
     width: 100vw;
     box-shadow: none;
+  }
+
+  .home-art-image {
+    inset: -2.5%;
+    background-size: cover;
   }
 
   .top-bar,
