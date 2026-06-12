@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Creature Card Backbone</title>
-    <link rel="stylesheet" href="styles.css?v=2" />
+    <link rel="stylesheet" href="styles.css?v=3" />
   </head>
   <body>
     <div class="app-shell" id="homeScene">
@@ -29,33 +29,37 @@
       </header>
 
       <main class="main-menu" aria-label="Main menu">
-        <button class="map-entry summon-entry" id="openSummon" type="button" style="--x: 52%; --y: 78%">
-          <span class="map-pin" aria-hidden="true">+</span>
-          <span>
-            <strong>Summoning</strong>
-            <small>Open creature packs</small>
-          </span>
+        <button
+          class="map-entry summon-entry label-above"
+          id="openSummon"
+          type="button"
+          style="--x: 52%; --y: 78%; --w: 9.5rem; --h: 8.5rem; --label-y: -3.4rem"
+        >
+          <span class="map-caption">Summoning</span>
         </button>
-        <button class="map-entry collection-entry" id="openCollection" type="button" style="--x: 23%; --y: 49%">
-          <span class="map-pin" aria-hidden="true">=</span>
-          <span>
-            <strong>Monsters</strong>
-            <small>View and sort collection</small>
-          </span>
+        <button
+          class="map-entry collection-entry label-below"
+          id="openCollection"
+          type="button"
+          style="--x: 23%; --y: 49%; --w: 10rem; --h: 8.75rem; --label-y: 4.7rem"
+        >
+          <span class="map-caption">Monsters</span>
         </button>
-        <button class="map-entry locked-entry" type="button" style="--x: 72%; --y: 34%" disabled>
-          <span class="map-pin" aria-hidden="true">!</span>
-          <span>
-            <strong>Forge</strong>
-            <small>Coming soon</small>
-          </span>
+        <button
+          class="map-entry locked-entry label-below"
+          type="button"
+          style="--x: 72%; --y: 34%; --w: 10rem; --h: 8.25rem; --label-y: 4.55rem"
+          disabled
+        >
+          <span class="map-caption">Forge</span>
         </button>
-        <button class="map-entry locked-entry" type="button" style="--x: 72%; --y: 61%" disabled>
-          <span class="map-pin" aria-hidden="true">i</span>
-          <span>
-            <strong>Trials</strong>
-            <small>Coming soon</small>
-          </span>
+        <button
+          class="map-entry locked-entry label-below"
+          type="button"
+          style="--x: 72%; --y: 61%; --w: 8rem; --h: 8rem; --label-y: 4.25rem"
+          disabled
+        >
+          <span class="map-caption">Trials</span>
         </button>
       </main>
 
