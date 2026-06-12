@@ -175,11 +175,11 @@ const homeScene = document.querySelector("#homeScene");
 const navSummonButton = document.querySelector("#navSummon");
 const navCollectionButton = document.querySelector("#navCollection");
 const mainMenu = document.querySelector(".main-menu");
-const layoutEditor = document.querySelector("#layoutEditor");
-const toggleLayoutEditButton = document.querySelector("#toggleLayoutEdit");
-const saveLayoutButton = document.querySelector("#saveLayout");
-const layoutStatus = document.querySelector("#layoutStatus");
 const layoutEntries = [...document.querySelectorAll("[data-layout-id]")];
+let layoutEditor = null;
+let toggleLayoutEditButton = null;
+let saveLayoutButton = null;
+let layoutStatus = null;
 
 function getRarity(stars) {
   return rarities.find((rarity) => rarity.stars === stars);
@@ -197,7 +197,26 @@ function getRootFontSize() {
   return Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
 }
 
+function createLayoutEditor() {
+  layoutEditor = document.createElement("aside");
+  layoutEditor.className = "layout-editor";
+  layoutEditor.id = "layoutEditor";
+  layoutEditor.setAttribute("aria-label", "Layout editor");
+  layoutEditor.innerHTML = `
+    <button type="button" id="toggleLayoutEdit" aria-pressed="false">Edit Layout</button>
+    <button type="button" id="saveLayout" disabled>Save</button>
+    <span id="layoutStatus">Layout ready</span>
+  `;
+  homeScene.append(layoutEditor);
+
+  toggleLayoutEditButton = layoutEditor.querySelector("#toggleLayoutEdit");
+  saveLayoutButton = layoutEditor.querySelector("#saveLayout");
+  layoutStatus = layoutEditor.querySelector("#layoutStatus");
+}
+
 function setLayoutStatus(message) {
+  if (!layoutStatus) return;
+
   layoutStatus.textContent = message;
 }
 
@@ -239,6 +258,8 @@ async function loadButtonLayout() {
 }
 
 function setLayoutDirty(isDirty) {
+  if (!saveLayoutButton) return;
+
   saveLayoutButton.disabled = !isDirty;
 }
 
@@ -674,7 +695,7 @@ document.querySelectorAll("[data-sort-direction]").forEach((button) => {
 });
 
 if (isLocalLayoutEditor) {
-  layoutEditor.hidden = false;
+  createLayoutEditor();
 
   toggleLayoutEditButton.addEventListener("click", () => {
     setLayoutEditing(!isLayoutEditing);
