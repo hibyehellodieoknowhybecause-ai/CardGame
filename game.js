@@ -505,6 +505,18 @@ function persistLocalLayoutDraft() {
 }
 
 async function sendLayout(endpoint) {
+  const versionResponse = await fetch(`/api/version?v=${Date.now()}`, { cache: "no-store" });
+
+  if (!versionResponse.ok) {
+    throw new Error("Restart the dev server; it is missing the layout editor API");
+  }
+
+  const version = await versionResponse.json().catch(() => ({}));
+
+  if (!version.supportsStructuredLayout || !version.supportsTextBoxes) {
+    throw new Error("Restart the dev server; it is too old for text boxes");
+  }
+
   const response = await fetch(endpoint, {
     method: "POST",
     headers: { "content-type": "application/json" },

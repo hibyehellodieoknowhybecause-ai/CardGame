@@ -8,6 +8,7 @@ const root = process.cwd();
 const port = Number(process.argv[2] || process.env.PORT || 4174);
 const host = "127.0.0.1";
 const layoutPath = join(root, "layout.json");
+const serverVersion = 2;
 
 const contentTypes = {
   ".html": "text/html; charset=utf-8",
@@ -175,6 +176,16 @@ function serveFile(request, response) {
 }
 
 createServer((request, response) => {
+  if (request.method === "GET" && request.url === "/api/version") {
+    sendJson(response, 200, {
+      ok: true,
+      version: serverVersion,
+      supportsStructuredLayout: true,
+      supportsTextBoxes: true,
+    });
+    return;
+  }
+
   if (request.method === "POST" && request.url === "/api/layout") {
     saveLayout(request, response);
     return;
