@@ -5,6 +5,7 @@ This is a small static prototype for a creature-card summoning game. Open it wit
 ## Current Systems
 
 - Main menu with Summoning and Monsters sections.
+- Dev layout editor for repositioning and resizing main-map buttons from inside the game.
 - Monster collection screen listing all summoned creatures.
 - Collection sorting by attribute, stars, level, ATK, SPD, DEF, or HP in ascending or descending order.
 - Two summon packs:
@@ -36,3 +37,17 @@ Each summoned card instance already includes these fields for later expansion:
 - `canAwaken`: placeholder flag for evolution or awakening-style systems.
 
 In the browser console, inspect `window.cardGameSystem` to see the live data, odds, player state, and helper functions.
+
+## Editing Button Layouts
+
+Run the dev server when you want in-game layout changes to write back to this repo:
+
+```sh
+node dev-server.mjs
+```
+
+Open `http://127.0.0.1:4174`, click **Edit Layout**, then drag map buttons to move them or drag the lower-right handle to resize them. If that port is busy, run another port, for example `node dev-server.mjs 4175`, and open `http://127.0.0.1:4175`.
+
+- **Save** writes the current button layout to `layout.json`.
+- **Save + GitHub** writes `layout.json`, commits it with `Update in-game layout`, and runs `git push`.
+- If the game is opened without the dev server, edits are kept as a browser draft until the dev server is available.

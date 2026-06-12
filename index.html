@@ -9,7 +9,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#111318" />
     <title>Creature Card Backbone</title>
-    <link rel="stylesheet" href="styles.css?v=5" />
+    <link rel="stylesheet" href="styles.css?v=6" />
   </head>
   <body>
     <div class="app-shell" id="homeScene">
@@ -37,6 +37,7 @@
         <button
           class="map-entry summon-entry"
           id="openSummon"
+          data-layout-id="summoning"
           type="button"
           style="--x: 52%; --y: 78%; --w: 9.5rem; --h: 8.5rem; --label-y: 2.25rem"
         >
@@ -45,6 +46,7 @@
         <button
           class="map-entry collection-entry"
           id="openCollection"
+          data-layout-id="monsters"
           type="button"
           style="--x: 23%; --y: 49%; --w: 10rem; --h: 8.75rem; --label-y: 2.4rem"
         >
@@ -52,17 +54,21 @@
         </button>
         <button
           class="map-entry locked-entry"
+          id="openForge"
+          data-layout-id="forge"
           type="button"
           style="--x: 72%; --y: 34%; --w: 10rem; --h: 8.25rem; --label-y: 2.35rem"
-          disabled
+          aria-disabled="true"
         >
           <span class="map-caption">Forge</span>
         </button>
         <button
           class="map-entry locked-entry"
+          id="openTrials"
+          data-layout-id="trials"
           type="button"
           style="--x: 72%; --y: 61%; --w: 8rem; --h: 8rem; --label-y: 2.25rem"
-          disabled
+          aria-disabled="true"
         >
           <span class="map-caption">Trials</span>
         </button>
@@ -73,6 +79,13 @@
         <button type="button" id="navSummon">Summon</button>
         <button type="button" id="navCollection">Monsters</button>
       </nav>
+
+      <aside class="layout-editor" id="layoutEditor" aria-label="Layout editor">
+        <button type="button" id="toggleLayoutEdit" aria-pressed="false">Edit Layout</button>
+        <button type="button" id="saveLayout" disabled>Save</button>
+        <button type="button" id="publishLayout" disabled>Save + GitHub</button>
+        <span id="layoutStatus">Layout ready</span>
+      </aside>
     </div>
 
     <section class="summon-menu" id="summonMenu" aria-hidden="true" aria-label="Summoning menu">

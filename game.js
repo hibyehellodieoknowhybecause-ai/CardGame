@@ -143,6 +143,17 @@ const collectionSort = {
   direction: "desc",
 };
 
+const defaultLayout = {
+  summoning: { x: 52, y: 78, w: 9.5, h: 8.5, labelY: 2.25 },
+  monsters: { x: 23, y: 49, w: 10, h: 8.75, labelY: 2.4 },
+  forge: { x: 72, y: 34, w: 10, h: 8.25, labelY: 2.35 },
+  trials: { x: 72, y: 61, w: 8, h: 8, labelY: 2.25 },
+};
+
+let buttonLayout = structuredClone(defaultLayout);
+let isLayoutEditing = false;
+let activeLayoutDrag = null;
+
 const openSummonButton = document.querySelector("#openSummon");
 const openCollectionButton = document.querySelector("#openCollection");
 const closeSummonButton = document.querySelector("#closeSummon");
@@ -160,6 +171,12 @@ const mysticTickets = document.querySelector("#mysticTickets");
 const homeScene = document.querySelector("#homeScene");
 const navSummonButton = document.querySelector("#navSummon");
 const navCollectionButton = document.querySelector("#navCollection");
+const mainMenu = document.querySelector(".main-menu");
+const toggleLayoutEditButton = document.querySelector("#toggleLayoutEdit");
+const saveLayoutButton = document.querySelector("#saveLayout");
+const publishLayoutButton = document.querySelector("#publishLayout");
+const layoutStatus = document.querySelector("#layoutStatus");
+const layoutEntries = [...document.querySelectorAll("[data-layout-id]")];
 
 function getRarity(stars) {
   return rarities.find((rarity) => rarity.stars === stars);
@@ -167,6 +184,182 @@ function getRarity(stars) {
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
+}
+
+function roundLayoutValue(value) {
+  return Math.round(value * 100) / 100;
+}
+
+function getRootFontSize() {
+  return Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+}
+
+function setLayoutStatus(message) {
+  layoutStatus.textContent = message;
+}
+
+function applyButtonLayout() {
+  layoutEntries.forEach((entry) => {
+    const layout = buttonLayout[entry.dataset.layoutId];
+
+    if (!layout) return;
+
+    entry.style.setProperty("--x", `${layout.x}%`);
+    entry.style.setProperty("--y", `${layout.y}%`);
+    entry.style.setProperty("--w", `${layout.w}rem`);
+    entry.style.setProperty("--h", `${layout.h}rem`);
+    entry.style.setProperty("--label-y", `${layout.labelY}rem`);
+  });
+}
+
+async function loadButtonLayout() {
+  try {
+    const savedLocalLayout = localStorage.getItem("cardGameLayoutDraft");
+
+    if (savedLocalLayout) {
+      buttonLayout = { ...buttonLayout, ...JSON.parse(savedLocalLayout) };
+      setLayoutStatus("Loaded local draft");
+    }
+
+    const response = await fetch("layout.json", { cache: "no-store" });
+
+    if (response.ok) {
+      buttonLayout = { ...buttonLayout, ...(await response.json()) };
+      localStorage.removeItem("cardGameLayoutDraft");
+      setLayoutStatus("Layout loaded");
+    }
+  } catch {
+    setLayoutStatus("Using default layout");
+  }
+
+  applyButtonLayout();
+}
+
+function setLayoutDirty(isDirty) {
+  saveLayoutButton.disabled = !isDirty;
+  publishLayoutButton.disabled = !isDirty;
+}
+
+function persistLocalLayoutDraft() {
+  localStorage.setItem("cardGameLayoutDraft", JSON.stringify(buttonLayout));
+}
+
+async function sendLayout(endpoint) {
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(buttonLayout),
+  });
+  const result = await response.json().catch(() => ({}));
+
+  if (!response.ok || result.ok === false) {
+    throw new Error(result.error || "The layout server did not accept the save.");
+  }
+
+  return result;
+}
+
+async function saveLayoutToRepo() {
+  setLayoutStatus("Saving layout...");
+
+  try {
+    await sendLayout("/api/layout");
+    localStorage.removeItem("cardGameLayoutDraft");
+    setLayoutDirty(false);
+    setLayoutStatus("Saved to layout.json");
+  } catch (error) {
+    persistLocalLayoutDraft();
+    setLayoutStatus("Draft saved locally. Start dev-server.mjs to write repo.");
+    console.warn(error);
+  }
+}
+
+async function publishLayoutToGitHub() {
+  setLayoutStatus("Publishing layout...");
+
+  try {
+    const result = await sendLayout("/api/layout/publish");
+    localStorage.removeItem("cardGameLayoutDraft");
+    setLayoutDirty(false);
+    setLayoutStatus(result.message || "Pushed to GitHub");
+  } catch (error) {
+    persistLocalLayoutDraft();
+    setLayoutStatus("Publish failed. Draft saved locally.");
+    console.warn(error);
+  }
+}
+
+function setLayoutEditing(nextValue) {
+  isLayoutEditing = nextValue;
+  homeScene.classList.toggle("layout-editing", isLayoutEditing);
+  toggleLayoutEditButton.setAttribute("aria-pressed", String(isLayoutEditing));
+  toggleLayoutEditButton.textContent = isLayoutEditing ? "Done" : "Edit Layout";
+  setLayoutStatus(isLayoutEditing ? "Drag buttons. Pull lower-right corner to resize." : "Layout ready");
+}
+
+function getLayoutAction(entry, clientX, clientY) {
+  const rect = entry.getBoundingClientRect();
+  const isResize =
+    clientX >= rect.right - Math.max(24, rect.width * 0.22) && clientY >= rect.bottom - Math.max(24, rect.height * 0.22);
+
+  return isResize ? "resize" : "move";
+}
+
+function startLayoutDrag(event) {
+  const entry = event.target.closest("[data-layout-id]");
+
+  if (!isLayoutEditing || !entry) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  const item = buttonLayout[entry.dataset.layoutId];
+  const entryRect = entry.getBoundingClientRect();
+
+  activeLayoutDrag = {
+    action: getLayoutAction(entry, event.clientX, event.clientY),
+    entry,
+    id: entry.dataset.layoutId,
+    startX: event.clientX,
+    startY: event.clientY,
+    startLayout: { ...item },
+    startWidth: entryRect.width,
+    startHeight: entryRect.height,
+  };
+
+  entry.classList.add("is-layout-target");
+  entry.setPointerCapture(event.pointerId);
+}
+
+function updateLayoutDrag(event) {
+  if (!activeLayoutDrag) return;
+
+  event.preventDefault();
+
+  const layout = buttonLayout[activeLayoutDrag.id];
+  const menuRect = mainMenu.getBoundingClientRect();
+
+  if (activeLayoutDrag.action === "move") {
+    layout.x = roundLayoutValue(clamp(((event.clientX - menuRect.left) / menuRect.width) * 100, 5, 95));
+    layout.y = roundLayoutValue(clamp(((event.clientY - menuRect.top) / menuRect.height) * 100, 5, 95));
+  } else {
+    const rootFontSize = getRootFontSize();
+    layout.w = roundLayoutValue(clamp((activeLayoutDrag.startWidth + event.clientX - activeLayoutDrag.startX) / rootFontSize, 4, 18));
+    layout.h = roundLayoutValue(clamp((activeLayoutDrag.startHeight + event.clientY - activeLayoutDrag.startY) / rootFontSize, 4, 18));
+  }
+
+  applyButtonLayout();
+  persistLocalLayoutDraft();
+  setLayoutDirty(true);
+  setLayoutStatus("Unsaved layout changes");
+}
+
+function stopLayoutDrag(event) {
+  if (!activeLayoutDrag) return;
+
+  activeLayoutDrag.entry.classList.remove("is-layout-target");
+  activeLayoutDrag.entry.releasePointerCapture(event.pointerId);
+  activeLayoutDrag = null;
 }
 
 function getMaxLevelForStars(stars) {
@@ -439,10 +632,12 @@ function renderCard(card) {
 }
 
 openSummonButton.addEventListener("click", () => {
+  if (isLayoutEditing) return;
   summonMenu.setAttribute("aria-hidden", "false");
 });
 
 openCollectionButton.addEventListener("click", () => {
+  if (isLayoutEditing) return;
   renderCollection();
   collectionMenu.setAttribute("aria-hidden", "false");
 });
@@ -491,6 +686,26 @@ document.querySelectorAll("[data-sort-direction]").forEach((button) => {
   });
 });
 
+toggleLayoutEditButton.addEventListener("click", () => {
+  setLayoutEditing(!isLayoutEditing);
+});
+
+saveLayoutButton.addEventListener("click", saveLayoutToRepo);
+publishLayoutButton.addEventListener("click", publishLayoutToGitHub);
+
+layoutEntries.forEach((entry) => {
+  entry.addEventListener("pointerdown", startLayoutDrag);
+  entry.addEventListener("pointermove", updateLayoutDrag);
+  entry.addEventListener("pointerup", stopLayoutDrag);
+  entry.addEventListener("pointercancel", stopLayoutDrag);
+  entry.addEventListener("click", (event) => {
+    if (!isLayoutEditing) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+  });
+});
+
 function updateSceneMotion(clientX, clientY) {
   const rect = homeScene.getBoundingClientRect();
   const x = (clientX - rect.left) / rect.width - 0.5;
@@ -501,6 +716,7 @@ function updateSceneMotion(clientX, clientY) {
 }
 
 homeScene.addEventListener("pointermove", (event) => {
+  if (isLayoutEditing) return;
   updateSceneMotion(event.clientX, event.clientY);
 });
 
@@ -512,6 +728,8 @@ homeScene.addEventListener("pointerleave", () => {
 renderResources();
 renderPacks();
 renderCollection();
+applyButtonLayout();
+loadButtonLayout();
 
 window.cardGameSystem = {
   elements,
@@ -527,4 +745,6 @@ window.cardGameSystem = {
   calculateFinalMaxStats,
   calculateProjectedStats,
   sortCards,
+  buttonLayout,
+  applyButtonLayout,
 };
