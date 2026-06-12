@@ -48,6 +48,6 @@ node dev-server.mjs
 
 Open `http://127.0.0.1:4174`, click **Edit Layout**, then drag map buttons to move them or drag the lower-right handle to resize them. If that port is busy, run another port, for example `node dev-server.mjs 4175`, and open `http://127.0.0.1:4175`.
 
-- **Save** writes the current button layout to `layout.json`.
-- **Save + GitHub** writes `layout.json`, commits it with `Update in-game layout`, and runs `git push`.
+- **Save** writes `layout.json`, commits it with `Update in-game layout`, and runs `git push`.
 - If the game is opened without the dev server, edits are kept as a browser draft until the dev server is available.
+- The layout editor only appears on the local dev server, not on the public game.

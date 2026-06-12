@@ -153,6 +153,9 @@ const defaultLayout = {
 let buttonLayout = structuredClone(defaultLayout);
 let isLayoutEditing = false;
 let activeLayoutDrag = null;
+const isLocalLayoutEditor =
+  window.location.protocol.startsWith("http") &&
+  ["127.0.0.1", "localhost"].includes(window.location.hostname);
 
 const openSummonButton = document.querySelector("#openSummon");
 const openCollectionButton = document.querySelector("#openCollection");
@@ -172,9 +175,9 @@ const homeScene = document.querySelector("#homeScene");
 const navSummonButton = document.querySelector("#navSummon");
 const navCollectionButton = document.querySelector("#navCollection");
 const mainMenu = document.querySelector(".main-menu");
+const layoutEditor = document.querySelector("#layoutEditor");
 const toggleLayoutEditButton = document.querySelector("#toggleLayoutEdit");
 const saveLayoutButton = document.querySelector("#saveLayout");
-const publishLayoutButton = document.querySelector("#publishLayout");
 const layoutStatus = document.querySelector("#layoutStatus");
 const layoutEntries = [...document.querySelectorAll("[data-layout-id]")];
 
@@ -237,7 +240,6 @@ async function loadButtonLayout() {
 
 function setLayoutDirty(isDirty) {
   saveLayoutButton.disabled = !isDirty;
-  publishLayoutButton.disabled = !isDirty;
 }
 
 function persistLocalLayoutDraft() {
@@ -259,32 +261,17 @@ async function sendLayout(endpoint) {
   return result;
 }
 
-async function saveLayoutToRepo() {
-  setLayoutStatus("Saving layout...");
-
-  try {
-    await sendLayout("/api/layout");
-    localStorage.removeItem("cardGameLayoutDraft");
-    setLayoutDirty(false);
-    setLayoutStatus("Saved to layout.json");
-  } catch (error) {
-    persistLocalLayoutDraft();
-    setLayoutStatus("Draft saved locally. Start dev-server.mjs to write repo.");
-    console.warn(error);
-  }
-}
-
-async function publishLayoutToGitHub() {
-  setLayoutStatus("Publishing layout...");
+async function saveLayoutToGitHub() {
+  setLayoutStatus("Saving and pushing layout...");
 
   try {
     const result = await sendLayout("/api/layout/publish");
     localStorage.removeItem("cardGameLayoutDraft");
     setLayoutDirty(false);
-    setLayoutStatus(result.message || "Pushed to GitHub");
+    setLayoutStatus(result.message || "Saved and pushed to GitHub");
   } catch (error) {
     persistLocalLayoutDraft();
-    setLayoutStatus("Publish failed. Draft saved locally.");
+    setLayoutStatus("Save failed. Draft saved locally.");
     console.warn(error);
   }
 }
@@ -686,25 +673,28 @@ document.querySelectorAll("[data-sort-direction]").forEach((button) => {
   });
 });
 
-toggleLayoutEditButton.addEventListener("click", () => {
-  setLayoutEditing(!isLayoutEditing);
-});
+if (isLocalLayoutEditor) {
+  layoutEditor.hidden = false;
 
-saveLayoutButton.addEventListener("click", saveLayoutToRepo);
-publishLayoutButton.addEventListener("click", publishLayoutToGitHub);
-
-layoutEntries.forEach((entry) => {
-  entry.addEventListener("pointerdown", startLayoutDrag);
-  entry.addEventListener("pointermove", updateLayoutDrag);
-  entry.addEventListener("pointerup", stopLayoutDrag);
-  entry.addEventListener("pointercancel", stopLayoutDrag);
-  entry.addEventListener("click", (event) => {
-    if (!isLayoutEditing) return;
-
-    event.preventDefault();
-    event.stopPropagation();
+  toggleLayoutEditButton.addEventListener("click", () => {
+    setLayoutEditing(!isLayoutEditing);
   });
-});
+
+  saveLayoutButton.addEventListener("click", saveLayoutToGitHub);
+
+  layoutEntries.forEach((entry) => {
+    entry.addEventListener("pointerdown", startLayoutDrag);
+    entry.addEventListener("pointermove", updateLayoutDrag);
+    entry.addEventListener("pointerup", stopLayoutDrag);
+    entry.addEventListener("pointercancel", stopLayoutDrag);
+    entry.addEventListener("click", (event) => {
+      if (!isLayoutEditing) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+    });
+  });
+}
 
 function updateSceneMotion(clientX, clientY) {
   const rect = homeScene.getBoundingClientRect();
