@@ -221,7 +221,7 @@ async function loadButtonLayout() {
       setLayoutStatus("Loaded local draft");
     }
 
-    const response = await fetch("layout.json", { cache: "no-store" });
+    const response = await fetch(`layout.json?v=${Date.now()}`, { cache: "no-store" });
 
     if (response.ok) {
       buttonLayout = { ...buttonLayout, ...(await response.json()) };
