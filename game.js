@@ -529,7 +529,7 @@ async function saveLayoutToGitHub() {
     setLayoutStatus(result.message || "Saved and pushed to GitHub");
   } catch (error) {
     persistLocalLayoutDraft();
-    setLayoutStatus("Save failed. Draft saved locally.");
+    setLayoutStatus(`Save failed: ${error.message}. Draft saved locally.`);
     console.warn(error);
   }
 }
