@@ -46,7 +46,7 @@ Run the dev server when you want in-game layout changes to write back to this re
 node dev-server.mjs
 ```
 
-Open `http://127.0.0.1:4174`, click **Edit Layout**, then drag map buttons to move them or drag the lower-right handle to resize them. If that port is busy, run another port, for example `node dev-server.mjs 4175`, and open `http://127.0.0.1:4175`.
+Open `http://127.0.0.1:4174`, click **Edit Layout**, then drag map buttons to move them or drag the lower-right handle to resize them. Use **Add Text** to place text boxes, then select a text box to edit its words, color, size, weight, alignment, position, and size. If that port is busy, run another port, for example `node dev-server.mjs 4175`, and open `http://127.0.0.1:4175`.
 
 - **Save** writes `layout.json`, commits it with `Update in-game layout`, and runs `git push`.
 - If the game is opened without the dev server, edits are kept as a browser draft until the dev server is available.

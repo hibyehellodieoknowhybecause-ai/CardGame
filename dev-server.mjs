@@ -44,7 +44,9 @@ function validateLayout(layout) {
     throw new Error("Layout must be an object.");
   }
 
-  for (const [id, item] of Object.entries(layout)) {
+  const buttons = layout.buttons && typeof layout.buttons === "object" && !Array.isArray(layout.buttons) ? layout.buttons : layout;
+
+  for (const [id, item] of Object.entries(buttons)) {
     if (!/^[a-z][a-z0-9-]*$/i.test(id)) {
       throw new Error(`Invalid layout id: ${id}`);
     }
@@ -52,6 +54,40 @@ function validateLayout(layout) {
     for (const key of ["x", "y", "w", "h", "labelY"]) {
       if (typeof item[key] !== "number" || !Number.isFinite(item[key])) {
         throw new Error(`${id}.${key} must be a number.`);
+      }
+    }
+  }
+
+  if (layout.textBoxes !== undefined && !Array.isArray(layout.textBoxes)) {
+    throw new Error("textBoxes must be an array.");
+  }
+
+  for (const [index, item] of (layout.textBoxes || []).entries()) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) {
+      throw new Error(`textBoxes[${index}] must be an object.`);
+    }
+
+    for (const key of ["id", "text", "color", "fontWeight", "align"]) {
+      if (typeof item[key] !== "string") {
+        throw new Error(`textBoxes[${index}].${key} must be a string.`);
+      }
+    }
+
+    if (!/^#[0-9a-f]{6}$/i.test(item.color)) {
+      throw new Error(`textBoxes[${index}].color must be a hex color.`);
+    }
+
+    if (!["500", "700", "900"].includes(item.fontWeight)) {
+      throw new Error(`textBoxes[${index}].fontWeight is invalid.`);
+    }
+
+    if (!["left", "center", "right"].includes(item.align)) {
+      throw new Error(`textBoxes[${index}].align is invalid.`);
+    }
+
+    for (const key of ["x", "y", "w", "h", "fontSize"]) {
+      if (typeof item[key] !== "number" || !Number.isFinite(item[key])) {
+        throw new Error(`textBoxes[${index}].${key} must be a number.`);
       }
     }
   }

@@ -143,16 +143,21 @@ const collectionSort = {
   direction: "desc",
 };
 
-const defaultLayout = {
+const defaultButtonLayout = {
   summoning: { x: 52, y: 78, w: 9.5, h: 8.5, labelY: 2.25 },
   monsters: { x: 23, y: 49, w: 10, h: 8.75, labelY: 2.4 },
   forge: { x: 72, y: 34, w: 10, h: 8.25, labelY: 2.35 },
   trials: { x: 72, y: 61, w: 8, h: 8, labelY: 2.25 },
 };
 
-let buttonLayout = structuredClone(defaultLayout);
+let layoutState = {
+  buttons: structuredClone(defaultButtonLayout),
+  textBoxes: [],
+};
+let buttonLayout = layoutState.buttons;
 let isLayoutEditing = false;
 let activeLayoutDrag = null;
+let activeTextBoxId = null;
 const isLocalLayoutEditor =
   window.location.protocol.startsWith("http") &&
   ["127.0.0.1", "localhost"].includes(window.location.hostname);
@@ -180,6 +185,13 @@ let layoutEditor = null;
 let toggleLayoutEditButton = null;
 let saveLayoutButton = null;
 let layoutStatus = null;
+let addTextBoxButton = null;
+let deleteTextBoxButton = null;
+let textBoxTextInput = null;
+let textBoxColorInput = null;
+let textBoxSizeInput = null;
+let textBoxWeightInput = null;
+let textBoxAlignInput = null;
 
 function getRarity(stars) {
   return rarities.find((rarity) => rarity.stars === stars);
@@ -204,12 +216,49 @@ function createLayoutEditor() {
   layoutEditor.setAttribute("aria-label", "Layout editor");
   layoutEditor.innerHTML = `
     <button type="button" id="toggleLayoutEdit" aria-pressed="false">Edit Layout</button>
+    <button type="button" id="addTextBox">Add Text</button>
+    <button type="button" id="deleteTextBox" disabled>Delete Text</button>
+    <label>
+      <span>Text</span>
+      <input id="textBoxText" type="text" disabled />
+    </label>
+    <label>
+      <span>Color</span>
+      <input id="textBoxColor" type="color" value="#fff3c6" disabled />
+    </label>
+    <label>
+      <span>Size</span>
+      <input id="textBoxSize" type="number" min="10" max="72" step="1" disabled />
+    </label>
+    <label>
+      <span>Weight</span>
+      <select id="textBoxWeight" disabled>
+        <option value="500">Regular</option>
+        <option value="700">Bold</option>
+        <option value="900">Heavy</option>
+      </select>
+    </label>
+    <label>
+      <span>Align</span>
+      <select id="textBoxAlign" disabled>
+        <option value="left">Left</option>
+        <option value="center">Center</option>
+        <option value="right">Right</option>
+      </select>
+    </label>
     <button type="button" id="saveLayout" disabled>Save</button>
     <span id="layoutStatus">Layout ready</span>
   `;
   homeScene.append(layoutEditor);
 
   toggleLayoutEditButton = layoutEditor.querySelector("#toggleLayoutEdit");
+  addTextBoxButton = layoutEditor.querySelector("#addTextBox");
+  deleteTextBoxButton = layoutEditor.querySelector("#deleteTextBox");
+  textBoxTextInput = layoutEditor.querySelector("#textBoxText");
+  textBoxColorInput = layoutEditor.querySelector("#textBoxColor");
+  textBoxSizeInput = layoutEditor.querySelector("#textBoxSize");
+  textBoxWeightInput = layoutEditor.querySelector("#textBoxWeight");
+  textBoxAlignInput = layoutEditor.querySelector("#textBoxAlign");
   saveLayoutButton = layoutEditor.querySelector("#saveLayout");
   layoutStatus = layoutEditor.querySelector("#layoutStatus");
 }
@@ -218,6 +267,72 @@ function setLayoutStatus(message) {
   if (!layoutStatus) return;
 
   layoutStatus.textContent = message;
+}
+
+function getSavedLayout() {
+  return {
+    buttons: layoutState.buttons,
+    textBoxes: layoutState.textBoxes,
+  };
+}
+
+function isObject(value) {
+  return value && typeof value === "object" && !Array.isArray(value);
+}
+
+function normalizeButtonLayout(rawButtons) {
+  const buttons = structuredClone(defaultButtonLayout);
+
+  Object.entries(buttons).forEach(([id, fallback]) => {
+    const item = rawButtons?.[id];
+
+    if (!isObject(item)) return;
+
+    buttons[id] = {
+      x: Number.isFinite(item.x) ? item.x : fallback.x,
+      y: Number.isFinite(item.y) ? item.y : fallback.y,
+      w: Number.isFinite(item.w) ? item.w : fallback.w,
+      h: Number.isFinite(item.h) ? item.h : fallback.h,
+      labelY: Number.isFinite(item.labelY) ? item.labelY : fallback.labelY,
+    };
+  });
+
+  return buttons;
+}
+
+function normalizeTextBox(item, index = 0) {
+  if (!isObject(item)) return null;
+
+  return {
+    id: String(item.id || `text-${Date.now()}-${index}`),
+    text: String(item.text || "New text"),
+    x: Number.isFinite(item.x) ? item.x : 50,
+    y: Number.isFinite(item.y) ? item.y : 45,
+    w: Number.isFinite(item.w) ? item.w : 12,
+    h: Number.isFinite(item.h) ? item.h : 3,
+    color: /^#[0-9a-f]{6}$/i.test(item.color) ? item.color : "#fff3c6",
+    fontSize: Number.isFinite(item.fontSize) ? clamp(item.fontSize, 10, 72) : 22,
+    fontWeight: ["500", "700", "900"].includes(String(item.fontWeight)) ? String(item.fontWeight) : "900",
+    align: ["left", "center", "right"].includes(item.align) ? item.align : "center",
+  };
+}
+
+function normalizeLayout(rawLayout) {
+  const usesStructuredLayout = isObject(rawLayout?.buttons) || Array.isArray(rawLayout?.textBoxes);
+  const rawButtons = usesStructuredLayout ? rawLayout.buttons : rawLayout;
+  const textBoxes = Array.isArray(rawLayout?.textBoxes)
+    ? rawLayout.textBoxes.map(normalizeTextBox).filter(Boolean)
+    : [];
+
+  return {
+    buttons: normalizeButtonLayout(rawButtons),
+    textBoxes,
+  };
+}
+
+function setLayoutState(nextLayout) {
+  layoutState = normalizeLayout(nextLayout);
+  buttonLayout = layoutState.buttons;
 }
 
 function applyButtonLayout() {
@@ -234,19 +349,86 @@ function applyButtonLayout() {
   });
 }
 
+function getTextBox(id) {
+  return layoutState.textBoxes.find((textBox) => textBox.id === id);
+}
+
+function selectTextBox(id) {
+  activeTextBoxId = id;
+
+  document.querySelectorAll(".layout-text-box").forEach((element) => {
+    element.classList.toggle("is-layout-target", element.dataset.textId === activeTextBoxId);
+  });
+
+  updateTextBoxControls();
+}
+
+function updateTextBoxControls() {
+  if (!textBoxTextInput) return;
+
+  const textBox = getTextBox(activeTextBoxId);
+  const hasSelection = Boolean(textBox);
+
+  deleteTextBoxButton.disabled = !hasSelection;
+  textBoxTextInput.disabled = !hasSelection;
+  textBoxColorInput.disabled = !hasSelection;
+  textBoxSizeInput.disabled = !hasSelection;
+  textBoxWeightInput.disabled = !hasSelection;
+  textBoxAlignInput.disabled = !hasSelection;
+
+  textBoxTextInput.value = textBox?.text || "";
+  textBoxColorInput.value = textBox?.color || "#fff3c6";
+  textBoxSizeInput.value = textBox?.fontSize || 22;
+  textBoxWeightInput.value = textBox?.fontWeight || "900";
+  textBoxAlignInput.value = textBox?.align || "center";
+}
+
+function renderTextBoxes() {
+  mainMenu.querySelectorAll(".layout-text-box").forEach((element) => element.remove());
+
+  layoutState.textBoxes.forEach((textBox) => {
+    const element = document.createElement("div");
+
+    element.className = "layout-text-box";
+    element.dataset.textId = textBox.id;
+    element.textContent = textBox.text;
+    element.style.setProperty("--x", `${textBox.x}%`);
+    element.style.setProperty("--y", `${textBox.y}%`);
+    element.style.setProperty("--w", `${textBox.w}rem`);
+    element.style.setProperty("--h", `${textBox.h}rem`);
+    element.style.setProperty("--text-color", textBox.color);
+    element.style.setProperty("--font-size", `${textBox.fontSize}px`);
+    element.style.setProperty("--font-weight", textBox.fontWeight);
+    element.style.setProperty("--text-align", textBox.align);
+    element.classList.toggle("is-layout-target", textBox.id === activeTextBoxId);
+    mainMenu.append(element);
+  });
+
+  if (activeTextBoxId && !getTextBox(activeTextBoxId)) {
+    activeTextBoxId = null;
+  }
+
+  updateTextBoxControls();
+}
+
+function applyLayout() {
+  applyButtonLayout();
+  renderTextBoxes();
+}
+
 async function loadButtonLayout() {
   try {
     const savedLocalLayout = localStorage.getItem("cardGameLayoutDraft");
 
     if (savedLocalLayout) {
-      buttonLayout = { ...buttonLayout, ...JSON.parse(savedLocalLayout) };
+      setLayoutState(JSON.parse(savedLocalLayout));
       setLayoutStatus("Loaded local draft");
     }
 
     const response = await fetch(`layout.json?v=${Date.now()}`, { cache: "no-store" });
 
     if (response.ok) {
-      buttonLayout = { ...buttonLayout, ...(await response.json()) };
+      setLayoutState(await response.json());
       localStorage.removeItem("cardGameLayoutDraft");
       setLayoutStatus("Layout loaded");
     }
@@ -254,7 +436,7 @@ async function loadButtonLayout() {
     setLayoutStatus("Using default layout");
   }
 
-  applyButtonLayout();
+  applyLayout();
 }
 
 function setLayoutDirty(isDirty) {
@@ -264,14 +446,14 @@ function setLayoutDirty(isDirty) {
 }
 
 function persistLocalLayoutDraft() {
-  localStorage.setItem("cardGameLayoutDraft", JSON.stringify(buttonLayout));
+  localStorage.setItem("cardGameLayoutDraft", JSON.stringify(getSavedLayout()));
 }
 
 async function sendLayout(endpoint) {
   const response = await fetch(endpoint, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify(buttonLayout),
+    body: JSON.stringify(getSavedLayout()),
   });
   const result = await response.json().catch(() => ({}));
 
@@ -313,21 +495,75 @@ function getLayoutAction(entry, clientX, clientY) {
   return isResize ? "resize" : "move";
 }
 
+function markLayoutDirty(message = "Unsaved layout changes") {
+  applyLayout();
+  persistLocalLayoutDraft();
+  setLayoutDirty(true);
+  setLayoutStatus(message);
+}
+
+function createTextBox() {
+  const textBox = normalizeTextBox({
+    id: `text-${Date.now()}`,
+    text: "New text",
+    x: 50,
+    y: 42,
+    w: 12,
+    h: 3,
+    color: "#fff3c6",
+    fontSize: 22,
+    fontWeight: "900",
+    align: "center",
+  });
+
+  layoutState.textBoxes.push(textBox);
+  selectTextBox(textBox.id);
+  markLayoutDirty("Added text box");
+}
+
+function deleteSelectedTextBox() {
+  if (!activeTextBoxId) return;
+
+  layoutState.textBoxes = layoutState.textBoxes.filter((textBox) => textBox.id !== activeTextBoxId);
+  activeTextBoxId = null;
+  markLayoutDirty("Deleted text box");
+}
+
+function updateSelectedTextBox(changes) {
+  const textBox = getTextBox(activeTextBoxId);
+
+  if (!textBox) return;
+
+  Object.assign(textBox, changes);
+  markLayoutDirty("Unsaved text changes");
+}
+
 function startLayoutDrag(event) {
+  const textBoxElement = event.target.closest(".layout-text-box");
   const entry = event.target.closest("[data-layout-id]");
 
-  if (!isLayoutEditing || !entry) return;
+  if (!isLayoutEditing || (!entry && !textBoxElement)) return;
 
   event.preventDefault();
   event.stopPropagation();
 
-  const item = buttonLayout[entry.dataset.layoutId];
-  const entryRect = entry.getBoundingClientRect();
+  const targetElement = textBoxElement || entry;
+  const item = textBoxElement ? getTextBox(textBoxElement.dataset.textId) : buttonLayout[entry.dataset.layoutId];
+  const entryRect = targetElement.getBoundingClientRect();
+
+  if (!item) return;
+
+  if (textBoxElement) {
+    selectTextBox(textBoxElement.dataset.textId);
+  } else {
+    selectTextBox(null);
+  }
 
   activeLayoutDrag = {
-    action: getLayoutAction(entry, event.clientX, event.clientY),
-    entry,
-    id: entry.dataset.layoutId,
+    action: getLayoutAction(targetElement, event.clientX, event.clientY),
+    entry: targetElement,
+    kind: textBoxElement ? "text" : "button",
+    id: textBoxElement ? textBoxElement.dataset.textId : entry.dataset.layoutId,
     startX: event.clientX,
     startY: event.clientY,
     startLayout: { ...item },
@@ -344,8 +580,11 @@ function updateLayoutDrag(event) {
 
   event.preventDefault();
 
-  const layout = buttonLayout[activeLayoutDrag.id];
+  const layout =
+    activeLayoutDrag.kind === "text" ? getTextBox(activeLayoutDrag.id) : buttonLayout[activeLayoutDrag.id];
   const menuRect = mainMenu.getBoundingClientRect();
+
+  if (!layout) return;
 
   if (activeLayoutDrag.action === "move") {
     layout.x = roundLayoutValue(clamp(((event.clientX - menuRect.left) / menuRect.width) * 100, 5, 95));
@@ -356,10 +595,7 @@ function updateLayoutDrag(event) {
     layout.h = roundLayoutValue(clamp((activeLayoutDrag.startHeight + event.clientY - activeLayoutDrag.startY) / rootFontSize, 4, 18));
   }
 
-  applyButtonLayout();
-  persistLocalLayoutDraft();
-  setLayoutDirty(true);
-  setLayoutStatus("Unsaved layout changes");
+  markLayoutDirty();
 }
 
 function stopLayoutDrag(event) {
@@ -702,12 +938,36 @@ if (isLocalLayoutEditor) {
   });
 
   saveLayoutButton.addEventListener("click", saveLayoutToGitHub);
+  addTextBoxButton.addEventListener("click", createTextBox);
+  deleteTextBoxButton.addEventListener("click", deleteSelectedTextBox);
+
+  textBoxTextInput.addEventListener("input", (event) => {
+    updateSelectedTextBox({ text: event.target.value });
+  });
+
+  textBoxColorInput.addEventListener("input", (event) => {
+    updateSelectedTextBox({ color: event.target.value });
+  });
+
+  textBoxSizeInput.addEventListener("input", (event) => {
+    updateSelectedTextBox({ fontSize: clamp(Number(event.target.value), 10, 72) });
+  });
+
+  textBoxWeightInput.addEventListener("change", (event) => {
+    updateSelectedTextBox({ fontWeight: event.target.value });
+  });
+
+  textBoxAlignInput.addEventListener("change", (event) => {
+    updateSelectedTextBox({ align: event.target.value });
+  });
+
+  mainMenu.addEventListener("pointerdown", startLayoutDrag);
+  mainMenu.addEventListener("pointermove", updateLayoutDrag);
+  mainMenu.addEventListener("pointerup", stopLayoutDrag);
+  mainMenu.addEventListener("pointercancel", stopLayoutDrag);
 
   layoutEntries.forEach((entry) => {
     entry.addEventListener("pointerdown", startLayoutDrag);
-    entry.addEventListener("pointermove", updateLayoutDrag);
-    entry.addEventListener("pointerup", stopLayoutDrag);
-    entry.addEventListener("pointercancel", stopLayoutDrag);
     entry.addEventListener("click", (event) => {
       if (!isLayoutEditing) return;
 
@@ -739,7 +999,7 @@ homeScene.addEventListener("pointerleave", () => {
 renderResources();
 renderPacks();
 renderCollection();
-applyButtonLayout();
+applyLayout();
 loadButtonLayout();
 
 window.cardGameSystem = {
@@ -756,6 +1016,7 @@ window.cardGameSystem = {
   calculateFinalMaxStats,
   calculateProjectedStats,
   sortCards,
+  layoutState,
   buttonLayout,
-  applyButtonLayout,
+  applyLayout,
 };
