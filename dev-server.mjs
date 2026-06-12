@@ -176,7 +176,9 @@ function serveFile(request, response) {
 }
 
 createServer((request, response) => {
-  if (request.method === "GET" && request.url === "/api/version") {
+  const requestUrl = new URL(request.url, `http://${request.headers.host}`);
+
+  if (request.method === "GET" && requestUrl.pathname === "/api/version") {
     sendJson(response, 200, {
       ok: true,
       version: serverVersion,
@@ -186,12 +188,12 @@ createServer((request, response) => {
     return;
   }
 
-  if (request.method === "POST" && request.url === "/api/layout") {
+  if (request.method === "POST" && requestUrl.pathname === "/api/layout") {
     saveLayout(request, response);
     return;
   }
 
-  if (request.method === "POST" && request.url === "/api/layout/publish") {
+  if (request.method === "POST" && requestUrl.pathname === "/api/layout/publish") {
     publishLayout(request, response);
     return;
   }
